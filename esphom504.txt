@@ -1,0 +1,1443 @@
+esphome:
+  name: esphome504
+  area: "Central Unit"
+  areas:
+    - id: living_room
+      name: "Living room"
+    - id: bedroom
+      name: "Bedroom"
+    - id: kids_room
+      name: "Kids room"
+    - id: kitchen
+      name: "Kitchen"
+    - id: balcony
+      name: "Balcony"
+    - id: bathroom
+      name: "Bathroom"
+    - id: toilet
+      name: "Toilet"
+    - id: hall
+      name: "Hall"
+  devices:
+    - id: living_room_device_group
+      name: "Living room"
+      area_id: living_room
+    - id: bedroom_device_group
+      name: "Bedroom"
+      area_id: bedroom
+    - id: kids_room_device_group
+      name: "Kids room"
+      area_id: kids_room
+    - id: kitchen_device_group
+      name: "Kitchen"
+      area_id: kitchen
+    - id: balcony_device_group
+      name: "Balcony"
+      area_id: balcony
+    - id: bathroom_device_group
+      name: "Bathroom"
+      area_id: bathroom
+    - id: toilet_device_group
+      name: "Toilet"
+      area_id: toilet
+    - id: hall_device_group
+      name: "Hall"
+      area_id: hall
+
+  on_boot:
+    then:
+      - delay: 10s
+      - number.set:
+          id: template_stm32_temp_threshold
+          value: 50
+      - switch.turn_on: dout_2
+      - switch.turn_on: dout_14
+ 
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+#  level: INFO
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "qS6hIQ7Ba7fDN5tpp0luz7QCOwkmeOKkyJJ6hDeIhgU="
+
+ota:
+  - platform: esphome
+    password: "47f7c7132b0e3b90d526e7a0ef15cbe8"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Esphome504 Fallback Hotspot"
+    password: "RBfxtxHD33pc"
+
+captive_portal:
+#
+external_components:
+  - source:
+      type: git
+      url: https://github.com/eugenscobich/esphome-components
+      ref: main
+    refresh: 0s
+    components: [stm32_port_expander]
+
+one_wire:
+  - platform: gpio
+    pin: GPIO14
+    id: one_wire_1
+
+i2c:
+  sda: GPIO16
+  scl: GPIO15
+  frequency: 400kHz
+
+stm32_port_expander:
+  - id: stm32_hub1
+    address: 0x08
+
+time:
+  - platform: sntp
+    id: sntp_time
+
+button:
+  - platform: restart
+    name: "Esphome504 Restart"
+  - platform: template
+    name: "Master switch"
+    id: master_switch
+    device_id: hall_device_group
+    on_press:
+      then:
+        - light.turn_off: light_25
+        - light.turn_off: light_26
+        - switch.turn_off: dout_2
+        - light.turn_off: light_29
+        - light.turn_off: light_27
+        - light.turn_off: light_30
+        - light.turn_off: light_31
+        - light.turn_off: light_32
+        #- switch.turn_off: dout_8 this is gaz boiler
+        - light.turn_off: light_33
+        - light.turn_off: light_34
+        - switch.turn_off: dout_11
+        - light.turn_off: light_28
+        - switch.turn_off: dout_13
+        - switch.turn_off: dout_14
+        - light.turn_off: light_35
+        - switch.turn_off: dout_16
+        - light.turn_off: light_0
+        - light.turn_off: light_1
+        - light.turn_off: light_2
+        - light.turn_off: light_3
+        - light.turn_off: light_4
+        - light.turn_off: light_5
+        - light.turn_off: light_6
+        - light.turn_off: light_7
+        - light.turn_off: light_8
+        - light.turn_off: light_9
+        - light.turn_off: light_10
+        - light.turn_off: light_11
+        - light.turn_off: light_12
+        - light.turn_off: light_13
+        - light.turn_off: light_14
+        - light.turn_off: light_15
+        - light.turn_off: light_16
+        - climate.control:
+            id: climate_1
+            mode: "OFF"
+        - climate.control:
+            id: climate_2
+            mode: "OFF"
+        - climate.control:
+            id: climate_3
+            mode: "OFF"
+        - fan.turn_off: fan_1
+        - fan.turn_off: fan_2
+        - light.turn_off: light_22
+        - light.turn_off: light_23
+        - light.turn_off: light_24
+        - climate.control:
+            id: climate_4
+            mode: "OFF"
+        - delay: 2s
+        - switch.turn_on: dout_2
+        - switch.turn_on: dout_14
+
+pcf8574:
+  - id: pcf8574_010
+    address: 0x22
+    pcf8575: false
+  - id: pcf8574_100
+    address: 0x24
+    pcf8575: false
+  - id: pcf8574_001
+    address: 0x21
+    pcf8575: false
+  - id: pcf8574_101
+    address: 0x25
+    pcf8575: false
+
+pca9685:
+  - id: pca9685_hub1
+    address: 0x58
+    frequency: 1525.88
+
+binary_sensor:
+  - platform: gpio
+    id: din_0
+    name: "DIN0 VY-3x1.5-1"
+    internal: true
+    device_id: toilet_device_group
+    pin:
+      pcf8574: pcf8574_010
+      number: 0
+      mode:
+        input: true
+      inverted: true    
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_24
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - script.execute: 
+              id: dimmer_hold
+              input: !lambda return id(din_0);
+              light: !lambda return id(light_24);
+    on_release:
+      then:
+        - script.stop: dimmer_hold
+  - platform: gpio
+    id: din_1
+    name: "DIN1 VY-3x1.5-2"
+    internal: true
+    device_id: toilet_device_group
+    pin:
+      pcf8574: pcf8574_010
+      number: 1
+      mode:
+        input: true
+      inverted: true
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_3
+          - light.toggle: light_14
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - fan.toggle: fan_1
+  - platform: gpio
+    id: din_2
+    name: "DIN2 LV-3x1.5-1"
+    internal: true
+    device_id: living_room_device_group
+    pin:
+      pcf8574: pcf8574_010
+      number: 2
+      mode:
+        input: true
+      inverted: true
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_5
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - script.execute: 
+              id: dimmer_hold
+              input: !lambda return id(din_2);
+              light: !lambda return id(light_5);
+    on_release:
+      then:
+        - script.stop: dimmer_hold
+  - platform: gpio
+    id: din_3
+    name: "DIN3 AV-3x1.5-1 AX-3x1.5-1"
+    pin:
+      pcf8574: pcf8574_010
+      number: 3
+      mode:
+        input: true
+      inverted: true
+    on_click:
+      then:
+        - light.toggle: light_32
+    device_id: living_room_device_group
+    internal: true
+  - platform: gpio
+    id: din_4
+    name: "DIN4 MX-3x1.5-2, MY-2x1.5-1, MZ-2x1.5-1"
+    pin:
+      pcf8574: pcf8574_010
+      number: 4
+      mode:
+        input: true
+      inverted: true
+    internal: true
+    device_id: kids_room_device_group
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_26
+          - light.toggle: light_1
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - light.toggle: light_27
+  - platform: gpio
+    id: din_5
+    name: "DIN5 MX-3x1.5-1"
+    device_id: kids_room_device_group
+    internal: true
+    pin:
+      pcf8574: pcf8574_010
+      number: 5
+      mode:
+        input: true
+      inverted: true
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_27
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - light.turn_off: light_27
+          - light.turn_off: light_25
+          - light.turn_off: light_26
+          - light.turn_off: light_28
+          - light.turn_off: light_1
+  - platform: gpio
+    id: din_6
+    name: "DIN6 MY-3x1.5-1"
+    internal: true
+    device_id: kids_room_device_group
+    pin:
+      pcf8574: pcf8574_010
+      number: 6
+      mode:
+        input: true
+      inverted: true
+    on_click:
+      then:
+        - light.toggle: light_25 # MF-2x1.5-1    
+  - platform: gpio
+    id: din_7
+    name: "DIN7 LZ-3x1.5-1"
+    internal: true
+    device_id: kitchen_device_group
+    pin:
+      pcf8574: pcf8574_010
+      number: 7
+      mode:
+        input: true
+      inverted: true
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_7
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - light.toggle: light_4  
+          - light.toggle: light_13
+  - platform: gpio
+    id: din_8
+    internal: true
+    name: "DIN8"
+    pin:
+      pcf8574: pcf8574_100
+      number: 1
+      mode:
+        input: true
+      inverted: true
+  - platform: gpio
+    id: din_9
+    internal: true
+    name: "DIN9"
+    pin:
+      pcf8574: pcf8574_100
+      number: 0
+      mode:
+        input: true
+      inverted: true
+  - platform: gpio
+    id: din_10
+    internal: true
+    name: "DIN10"
+    pin:
+      pcf8574: pcf8574_100
+      number: 3
+      mode:
+        input: true
+      inverted: true
+  - platform: gpio
+    id: din_11
+    internal: true
+    name: "DIN11"
+    pin:
+      pcf8574: pcf8574_100
+      number: 2
+      mode:
+        input: true
+      inverted: true
+  - platform: gpio
+    id: din_12
+    internal: true
+    name: "DIN12"
+    pin:
+      pcf8574: pcf8574_100
+      number: 5
+      mode:
+        input: true
+      inverted: true
+  - platform: gpio
+    id: din_13
+    internal: true
+    name: "DIN13"
+    pin:
+      pcf8574: pcf8574_100
+      number: 4
+      mode:
+        input: true
+      inverted: true
+  - platform: gpio
+    id: din_14
+    name: "DIN14 BY-3x1.5-2"
+    internal: true
+    device_id: bathroom_device_group
+    pin:
+      pcf8574: pcf8574_100
+      number: 7
+      mode:
+        input: true
+      inverted: true
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_2
+          - light.toggle: light_6
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - fan.toggle: fan_2    
+  - platform: gpio
+    id: din_15
+    name: "DIN15 BY-3x1.5-1"
+    internal: true
+    device_id: bathroom_device_group
+    pin:
+      pcf8574: pcf8574_100
+      number: 6
+      mode:
+        input: true
+      inverted: true
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_16
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - script.execute: 
+              id: dimmer_hold
+              input: !lambda return id(din_15);
+              light: !lambda return id(light_16);        
+  - platform: gpio
+    id: din_16
+    name: "DIN16 DV-3x1.5-1 DX-3x1.5-1 DZ-3x1.5-2"
+    internal: true
+    device_id: bedroom_device_group
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 0
+      mode:
+        input: true
+      inverted: true
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_31
+          - light.toggle: light_0
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - light.toggle: light_22
+  - platform: gpio
+    id: din_17
+    name: "DIN17 BX-3x1.5-1"
+    internal: true
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 1
+      mode:
+        input: true
+      inverted: true
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_2
+          - light.toggle: light_6
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - fan.toggle: fan_2
+  - platform: gpio
+    id: din_18
+    name: "DIN18 BX-3x1.5-2"
+    internal: true
+    device_id: bathroom_device_group
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 2
+      mode:
+        input: true
+      inverted: true
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_16
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - script.execute: 
+              id: dimmer_hold
+              input: !lambda return id(din_18);
+              light: !lambda return id(light_16);
+    on_release:
+      then:
+        - script.stop: dimmer_hold
+  - platform: gpio
+    id: din_19
+    name: "DIN19 AW-3x1.5-1"
+    internal: true
+    device_id: toilet_device_group
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 3
+      mode:
+        input: true
+      inverted: true   
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_24
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - script.execute: 
+              id: dimmer_hold
+              input: !lambda return id(din_19);
+              light: !lambda return id(light_24);
+    on_release:
+      then:
+        - script.stop: dimmer_hold
+  - platform: gpio
+    id: din_20
+    name: "DIN20 AW-3x.1.5-2"
+    internal: true
+    device_id: toilet_device_group
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 4
+      mode:
+        input: true
+      inverted: true
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_3
+          - light.toggle: light_14
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - fan.toggle: fan_1
+  - platform: gpio
+    id: din_21
+    name: "DIN21"
+    internal: true
+    device_id: kitchen_device_group
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 5
+      mode:
+        input: true
+      inverted: true
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_7
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - light.toggle: light_4
+          - light.toggle: light_13
+  - platform: gpio
+    id: din_22
+    name: "DIN22"
+    internal: true
+    device_id: balcony_device_group
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 6
+      mode:
+        input: true
+      inverted: true
+    on_click:
+      then:
+        - light.toggle: light_35
+  - platform: gpio
+    id: din_23
+    name: "DIN23 DX-3X1.5-2"
+    internal: true
+    device_id: bedroom_device_group
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 7
+      mode:
+        input: true
+      inverted: true
+    on_click:
+      then:
+        - light.toggle: light_34
+  - platform: gpio
+    id: din_24
+    name: "DIN24 DZ-3x1.3-1"
+    internal: true
+    device_id: bedroom_device_group
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 8
+      mode:
+        input: true
+      inverted: true
+    on_click:
+      then:
+        - light.toggle: light_29
+  - platform: gpio
+    id: din_25
+    name: "DIN25 DV-3x1.5-2"
+    internal: true
+    device_id: bedroom_device_group
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 9
+      mode:
+        input: true
+      inverted: true
+    on_multi_click:
+      - timing:
+          - ON for 50ms to 350ms
+          - OFF for at least 50ms
+        then:
+          - light.toggle: light_22
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - light.turn_off: light_31
+          - light.turn_off: light_29
+          - light.turn_off: light_34
+          - light.turn_off: light_0
+          - light.turn_off: light_22
+  - platform: gpio
+    id: din_26
+    name: "Master switch physical button"
+    device_id: hall_device_group
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 10
+      mode:
+        input: true
+      inverted: true
+    on_click:
+      then:
+        - button.press: master_switch
+  
+  - platform: gpio
+    id: din_27
+    internal: true
+    name: "DIN27"
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 11
+      mode:
+        input: true
+      inverted: true
+  - platform: gpio
+    id: din_28
+    name: "DIN28"
+    internal: true
+    device_id: living_room_device_group
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 12
+      mode:
+        input: true
+      inverted: true
+    on_click:
+      then:
+        - light.toggle: light_33
+  - platform: gpio
+    id: din_29
+    name: "DIN29 LW-3x1.5-2"
+    internal: true
+    device_id: living_room_device_group
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 13
+      mode:
+        input: true
+      inverted: true
+    on_click:
+      then:
+        - light.toggle: light_25
+  - platform: gpio
+    id: din_30
+    internal: true
+    name: "DIN30"
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 14
+      mode:
+        input: true
+      inverted: true
+
+sensor:
+  - platform: internal_temperature
+    name: "Internal Temperature"
+    device_id: hall_device_group
+  - platform: stm32_port_expander
+    id: stm32_temperature
+    pin: 1
+    name: 'Stm32 Temperature'
+    device_id: hall_device_group
+    update_interval: 10s
+    device_class: "temperature"  
+  - platform: stm32_port_expander
+    id: stm32_voltage
+    pin: 0
+    name: 'Stm32 Voltage'
+    internal: true
+    update_interval: 10s
+  - platform: dallas_temp
+    id: dallas_3
+    one_wire_id: one_wire_1
+    address: 0x9e000005b570ba28 # Optional if you only have one sensor; find via logs if omitted
+    name: "Floor temperature"
+    device_id: bathroom_device_group
+    update_interval: 10s
+  - platform: dallas_temp
+    id: dallas_1
+    one_wire_id: one_wire_1
+    address: 0x23000005b4cf3128
+    name: "Floor temperature"
+    device_id: kitchen_device_group
+    update_interval: 10s
+  - platform: dallas_temp
+    id: dallas_2
+    one_wire_id: one_wire_1
+    address: 0xc6000005b5229128 # Optional if you only have one sensor; find via logs if omitted
+    name: "Floor temperature"
+    device_id: toilet_device_group
+    update_interval: 10s
+  - platform: dallas_temp
+    id: dallas_4
+    one_wire_id: one_wire_1
+    address: 0x09000005b4b26628 # Optional if you only have one sensor; find via logs if omitted
+    name: "Floor temperature"
+    device_id: hall_device_group
+    update_interval: 10s
+
+
+    # 1. Read raw voltage from the analog pin
+  - platform: adc
+    pin: GPIO36
+    id: ntc_voltage
+    attenuation: 11db  # Required for ESP32 to read full 0-3.3V range
+
+    # 2. Convert raw voltage into resistance (Ohms)
+  - platform: resistance
+    id: ntc_resistance_sensor
+    sensor: ntc_voltage
+    configuration: DOWNSTREAM
+    resistor: 10kOhm
+    reference_voltage: 3.3V
+
+    # 3. Convert resistance into Temperature (Celsius) using the NTC platform
+  - platform: ntc
+    name: "Water Temperature"
+    sensor: ntc_resistance_sensor
+    calibration:
+      b_constant: 3950
+      reference_temperature: 25°C
+      reference_resistance: 50kOhm
+
+
+  - platform: pulse_counter
+    pin: GPIO34  # Change to your specific GPIO pin
+    name: "Water Flow Rate"
+    unit_of_measurement: "L/min"
+    icon: "mdi:water-pump"
+    # Example configuration entry
+    filters:
+      - multiply: 0.06  # (60s/1000 pulses per kWh)
+    total:
+      unit_of_measurement: 'L'
+      name: 'Energy Meter House'
+      filters:
+        - multiply: 0.001  # (1/1000 pulses per kWh)
+
+
+
+switch:
+  - platform: gpio
+    id: dout_2
+    name: "Mirror lamp"
+    device_id: toilet_device_group
+    internal: true
+    pin:
+      pcf8574: pcf8574_001
+      number: 2
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_8
+    name: "Gaz Boiler"
+    device_id: kitchen_device_group
+    pin:
+      pcf8574: pcf8574_101
+      number: 0
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_11
+    name: "DOUT11"
+    pin:
+      pcf8574: pcf8574_101
+      number: 3
+      mode:
+        output: true
+      inverted: true                  
+  - platform: gpio
+    id: dout_13
+    name: "DOUT13"
+    pin:
+      pcf8574: pcf8574_101
+      number: 5
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_14
+    name: "Mirror lamp"
+    device_id: bathroom_device_group
+    internal: true
+    pin:
+      pcf8574: pcf8574_101
+      number: 6
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_16
+    name: "Stm32 LED"
+    device_id: hall_device_group
+    internal: true
+    pin:
+      stm32_port_expander: stm32_hub1
+      number: 16
+      mode:
+        output: true
+
+output:
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 0
+    id: pwm_0
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 1
+    id: pwm_1
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 2
+    id: pwm_2
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 3
+    id: pwm_3 
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 4
+    id: pwm_4  
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 5
+    id: pwm_5    
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 6
+    id: pwm_6   
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 7
+    id: pwm_7    
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 8
+    id: pwm_8 
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 9
+    id: pwm_9 
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 10
+    id: pwm_10
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 11
+    id: pwm_11   
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 12
+    id: pwm_12
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 13
+    id: pwm_13
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 14
+    id: pwm_14 
+  - platform: pca9685
+    pca9685_id: pca9685_hub1
+    channel: 15
+    id: pwm_15
+  - platform: stm32_port_expander
+    stm32_port_expander_id: stm32_hub1
+    channel: 0
+    id: dim_0
+  - platform: stm32_port_expander
+    stm32_port_expander_id: stm32_hub1
+    channel: 1
+    id: dim_1
+  - platform: stm32_port_expander
+    stm32_port_expander_id: stm32_hub1
+    channel: 2
+    id: dim_2
+  - platform: stm32_port_expander
+    stm32_port_expander_id: stm32_hub1
+    channel: 3
+    id: dim_3
+  - platform: stm32_port_expander
+    stm32_port_expander_id: stm32_hub1
+    channel: 4
+    id: dim_4
+  - platform: stm32_port_expander
+    stm32_port_expander_id: stm32_hub1
+    channel: 5
+    id: dim_5
+  - platform: stm32_port_expander
+    stm32_port_expander_id: stm32_hub1
+    channel: 6
+    id: dim_6
+  - platform: stm32_port_expander
+    stm32_port_expander_id: stm32_hub1
+    channel: 7
+    id: dim_7
+  - platform: stm32_port_expander
+    stm32_port_expander_id: stm32_hub1
+    channel: 8
+    id: dim_8
+  - platform: stm32_port_expander
+    stm32_port_expander_id: stm32_hub1
+    channel: 9
+    id: dim_9
+  - platform: stm32_port_expander
+    stm32_port_expander_id: stm32_hub1
+    channel: 10
+    id: stm32_temp_threshold
+  - platform: gpio
+    id: dout_0
+    pin:
+      pcf8574: pcf8574_001
+      number: 0
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_1
+    # MF-2x1.5-1, ME-2x1.5-1 
+    pin:
+      pcf8574: pcf8574_001
+      number: 1
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_4
+    pin:
+      pcf8574: pcf8574_001
+      number: 4
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_12
+    pin:
+      pcf8574: pcf8574_101
+      number: 4
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_3
+    pin:
+      pcf8574: pcf8574_001
+      number: 3
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_5
+    pin:
+      pcf8574: pcf8574_001
+      number: 5
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_6
+    pin:
+      pcf8574: pcf8574_001
+      number: 6
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_7
+    pin:
+      pcf8574: pcf8574_001
+      number: 7
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_9
+    pin:
+      pcf8574: pcf8574_101
+      number: 1
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_10
+    pin:
+      pcf8574: pcf8574_101
+      number: 2
+      mode:
+        output: true
+      inverted: true
+  - platform: gpio
+    id: dout_15
+    pin:
+      pcf8574: pcf8574_101
+      number: 7
+      mode:
+        output: true
+      inverted: true
+      
+      
+light:
+  - platform: monochromatic
+    id: light_0
+    name: "Curtain decor"
+    device_id: bedroom_device_group
+    output: pwm_0
+    icon: "mdi:string-lights"
+  - platform: monochromatic
+    id: light_1
+    name: "Curtain decor"
+    output: pwm_1
+    device_id: kids_room_device_group
+    icon: "mdi:string-lights"
+  - platform: monochromatic
+    id: light_2
+    name: "Bottom decor"
+    device_id: bathroom_device_group
+    output: pwm_2
+    icon: "mdi:string-lights"
+  - platform: monochromatic
+    id: light_3
+    name: "Front decor"
+    device_id: toilet_device_group
+    output: pwm_3
+    icon: "mdi:string-lights"
+  - platform: monochromatic
+    id: light_4
+    name: "Top kitchen decor"
+    device_id: kitchen_device_group
+    output: pwm_4
+    icon: "mdi:string-lights"
+  - platform: monochromatic
+    id: light_5
+    name: "Living room decor"
+    device_id: living_room_device_group
+    output: pwm_5
+    icon: "mdi:string-lights"
+  - platform: monochromatic
+    id: light_6
+    name: "Top decor"
+    device_id: bathroom_device_group
+    output: pwm_6
+    icon: "mdi:string-lights"
+  - platform: monochromatic
+    id: light_7
+    name: "Kidchen workbench light"
+    device_id: kitchen_device_group
+    output: pwm_7
+    icon: "mdi:string-lights"
+  - platform: monochromatic
+    id: light_8
+    name: "PWM8"
+    output: pwm_8
+  - platform: monochromatic
+    id: light_9
+    name: "PWM9"
+    output: pwm_9
+  - platform: monochromatic
+    id: light_10
+    name: "PWM10"
+    output: pwm_10
+  - platform: monochromatic
+    id: light_11
+    name: "PWM11"
+    output: pwm_11
+  - platform: monochromatic
+    id: light_12
+    name: "PWM12"
+    output: pwm_12
+  - platform: monochromatic
+    id: light_13
+    name: "Balcony kitchen decor"
+    device_id: kitchen_device_group
+    output: pwm_13
+    icon: "mdi:string-lights"
+  - platform: monochromatic
+    id: light_14
+    name: "Bottom decor"
+    device_id: toilet_device_group
+    output: pwm_14
+    icon: "mdi:string-lights"
+  - platform: monochromatic
+    id: light_15
+    name: "PWM15"
+    output: pwm_15
+  - platform: monochromatic
+    id: light_16
+    name: "Ceiling lamp"
+    device_id: bathroom_device_group
+    output: dim_0
+    icon: "mdi:ceiling-light-multiple"
+  - platform: monochromatic
+    id: light_22
+    name: "Ceiling lamp"
+    device_id: bedroom_device_group
+    output: dim_6
+    icon: "mdi:ceiling-light-multiple"
+  - platform: monochromatic
+    id: light_23
+    name: "DIM7"
+    output: dim_7
+  - platform: monochromatic
+    id: light_24
+    name: "Ceiling lamp"
+    device_id: toilet_device_group
+    output: dim_8  
+    icon: "mdi:ceiling-light-multiple"
+  - platform: binary
+    id: light_25
+    # MF-2x1.5-1
+    name: "Right bedside lamp"
+    device_id: kids_room_device_group
+    output: dout_0
+    icon: "mdi:desk-lamp"
+  - platform: binary
+    id: light_26
+    # MF-2x1.5-1, ME-2x1.5-1 
+    name: "Badside decor lamps"
+    device_id: kids_room_device_group
+    output: dout_1
+    icon: "mdi:coach-lamp"
+  - platform: binary
+    id: light_27
+    name: "Ceiling lamp"
+    device_id: kids_room_device_group
+    output: dout_4
+    icon: "mdi:ceiling-light"
+  - platform: binary
+    id: light_28
+    name: "Left bedside lamp"
+    output: dout_12
+    device_id: kids_room_device_group
+    icon: "mdi:desk-lamp"
+  - platform: binary
+    id: light_29
+    name: "Right bedside lamp"
+    device_id: bedroom_device_group
+    output: dout_3               
+    icon: "mdi:desk-lamp"
+  - platform: binary
+    id: light_30
+    name: "Ceiling lamp"
+    device_id: living_room_device_group
+    output: dout_5
+    icon: "mdi:track-light"
+  - platform: binary
+    id: light_31
+    name: "Bedside decor lamps"
+    device_id: bedroom_device_group
+    output: dout_6
+    icon: "mdi:coach-lamp"
+  - platform: binary
+    id: light_32
+    name: "Ceiling lamp"
+    device_id: hall_device_group
+    output: dout_7
+    icon: "mdi:track-light"
+  - platform: binary
+    id: light_33
+    name: "Ceiling lamp"
+    device_id: kitchen_device_group
+    output: dout_9
+    icon: "mdi:track-light"
+  - platform: binary
+    id: light_34
+    name: "Left bedside lamp"
+    device_id: bedroom_device_group
+    output: dout_10
+    icon: "mdi:desk-lamp"
+  - platform: binary
+    id: light_35
+    name: "Ceiling lamp"
+    device_id: balcony_device_group
+    output: dout_15
+    icon: "mdi:ceiling-light-multiple"    
+    
+fan:
+  - platform: speed
+    id: fan_1
+    output: dim_4
+    name: "Fan"
+    device_id: toilet_device_group
+    speed_count: 2
+  - platform: speed
+    id: fan_2
+    output: dim_5
+    name: "Fan"
+    device_id: bathroom_device_group
+    speed_count: 2
+    
+number:
+  - platform: template
+    name: "Temperature threshold"
+    device_id: hall_device_group
+    id: template_stm32_temp_threshold
+    optimistic: true          # keep local state without waiting for HA feedback
+    #restore_value: true       # remember across reboots
+    min_value: 0
+    max_value: 100
+    step: 1
+    mode: slider              # shows a slider in HA
+    icon: "mdi:thermometer"
+    set_action:
+      - output.set_level:
+          id: stm32_temp_threshold
+          level: !lambda "return x / 255;"    
+
+climate:
+  - platform: thermostat
+    id: climate_1
+    name: "Floor thermostat"
+    device_id: kitchen_device_group
+    sensor: dallas_1
+    heat_action:
+      - output.set_level:
+          id: dim_1
+          level: 100%
+    idle_action:
+      - output.set_level:
+          id: dim_1
+          level: 0%
+    min_heating_off_time: 30s
+    min_heating_run_time: 30s
+    min_idle_time: 10s
+    icon: "mdi:heat-wave"
+  - platform: thermostat
+    id: climate_2
+    name: "Floor thermostat"
+    device_id: toilet_device_group
+    sensor: dallas_2
+    heat_action:
+      - output.set_level:
+          id: dim_2
+          level: 100%
+    idle_action:
+      - output.set_level:
+          id: dim_2
+          level: 0%
+    min_heating_off_time: 30s
+    min_heating_run_time: 30s
+    min_idle_time: 10s
+    icon: "mdi:heat-wave"
+  - platform: thermostat
+    id: climate_3
+    name: "Floor thermostat"
+    device_id: bathroom_device_group
+    sensor: dallas_3
+    heat_action:
+      - output.set_level:
+          id: dim_3
+          level: 100%
+    idle_action:
+      - output.set_level:
+          id: dim_3
+          level: 0%
+    min_heating_off_time: 30s
+    min_heating_run_time: 30s
+    min_idle_time: 10s
+    icon: "mdi:heat-wave"
+  - platform: thermostat
+    id: climate_4
+    name: "Floor thermostat"
+    device_id: hall_device_group
+    sensor: dallas_4
+    heat_action:
+      - output.set_level:
+          id: dim_9
+          level: 100%
+    idle_action:
+      - output.set_level:
+          id: dim_9
+          level: 0%
+    min_heating_off_time: 30s
+    min_heating_run_time: 30s
+    min_idle_time: 10s
+    icon: "mdi:heat-wave"
+
+    
+globals:
+  - id: light_dimmer_dir
+    type: int
+    restore_value: yes
+    initial_value: '1'       # 1 = brighter, -1 = dimmer
+
+script:
+  - id: dimmer_hold
+    mode: restart
+    parameters:
+      input: esphome::binary_sensor::BinarySensor*
+      light: esphome::light::LightState*
+    then:
+      - while:
+          condition:
+            lambda: |
+              return input->state;
+          then:
+            - lambda: |
+                // Current brightness in [0.0, 1.0]
+                float b = light->current_values.get_brightness();
+                //ESP_LOGD("app", "b: %f", b);
+
+                // Step size per tick
+                const float step = 0.02f;  // ~2% every cycle
+
+                // Apply direction
+                if (id(light_dimmer_dir) > 0) {
+                  b += step;
+                } else {
+                  b -= step;
+                }
+                // Clamp + reverse at endpoints
+                if (b >= 1.0f) { b = 1.0f; id(light_dimmer_dir) = -1; }
+                if (b <= 0.05f){ b = 0.05f; id(light_dimmer_dir) =  1; } // keep a faint minimum
+
+                // Send the change with a short transition for smoothness
+                auto call = light->turn_on();
+                call.set_brightness(b);
+                call.set_transition_length(150); // ms
+                call.perform();
+            - delay: 150ms
+
+font:
+  - file: "gfonts://Roboto"
+    id: small
+    size: 12
+
+display:
+  - platform: ssd1306_i2c
+    model: "SSD1306 128x64"
+    address: 0x3C
+    update_interval: 1s
+    lambda: |-
+      it.printf(0, 0, id(small), "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", id(din_0).state ? "1" : "0", id(din_1).state ? "1" : "0", id(din_2).state ? "1" : "0", id(din_3).state ? "1" : "0",
+                                                                     id(din_4).state ? "1" : "0", id(din_5).state ? "1" : "0", id(din_6).state ? "1" : "0", id(din_7).state ? "1" : "0",
+                                                                     id(din_8).state ? "1" : "0", id(din_9).state ? "1" : "0", id(din_10).state ? "1" : "0", id(din_11).state ? "1" : "0",
+                                                                     id(din_12).state ? "1" : "0", id(din_13).state ? "1" : "0", id(din_14).state ? "1" : "0", id(din_15).state ? "1" : "0");
+      it.printf(0, 12, id(small), "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", id(light_25).current_values.is_on() ? "1" : "0", id(light_26).current_values.is_on() ? "1" : "0", id(dout_2).state ? "1" : "0", id(light_29).current_values.is_on() ? "1" : "0",
+                                                                      id(light_27).current_values.is_on() ? "1" : "0", id(light_30).current_values.is_on() ? "1" : "0", id(light_31).current_values.is_on() ? "1" : "0", id(light_32).current_values.is_on() ? "1" : "0",
+                                                                      id(dout_8).state ? "1" : "0", id(light_33).current_values.is_on() ? "1" : "0", id(light_34).current_values.is_on() ? "1" : "0", id(dout_11).state ? "1" : "0",
+                                                                      id(light_28).current_values.is_on() ? "1" : "0", id(dout_13).state ? "1" : "0", id(dout_14).state ? "1" : "0", id(light_35).current_values.is_on() ? "1" : "0");
+      it.printf(0, 24, id(small), "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%.0f", id(din_16).state ? "1" : "0", id(din_17).state ? "1" : "0", id(din_18).state ? "1" : "0", id(din_19).state ? "1" : "0",
+                                                                        id(din_20).state ? "1" : "0", id(din_21).state ? "1" : "0", id(din_22).state ? "1" : "0", id(din_23).state ? "1" : "0",
+                                                                        id(din_24).state ? "1" : "0", id(din_25).state ? "1" : "0", id(din_26).state ? "1" : "0", id(din_27).state ? "1" : "0",
+                                                                        id(din_28).state ? "1" : "0", id(din_29).state ? "1" : "0", id(din_30).state ? "1" : "0", id(stm32_temperature).state);                                                                                       
+      it.printf(0, 36, id(small), "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", id(light_0).current_values.is_on() ? "1" : "0", id(light_1).current_values.is_on() ? "1" : "0", id(light_2).current_values.is_on() ? "1" : "0", id(light_3).current_values.is_on() ? "1" : "0",
+                                                                      id(light_4).current_values.is_on() ? "1" : "0", id(light_5).current_values.is_on() ? "1" : "0", id(light_6).current_values.is_on() ? "1" : "0", id(light_7).current_values.is_on() ? "1" : "0",
+                                                                      id(light_8).current_values.is_on() ? "1" : "0", id(light_9).current_values.is_on() ? "1" : "0", id(light_10).current_values.is_on() ? "1" : "0", id(light_11).current_values.is_on() ? "1" : "0",
+                                                                      id(light_12).current_values.is_on() ? "1" : "0", id(light_13).current_values.is_on() ? "1" : "0", id(light_14).current_values.is_on() ? "1" : "0", id(light_15).current_values.is_on() ? "1" : "0");
+      it.strftime(0, 48, id(small), "%Y-%m-%d %H:%M:%S", id(sntp_time).now());
+
